@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PSC-M1 | Smart Pharmacy System</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body>
+ 
+  <!-- ═══════════════════════════════════════════ LOGIN SCREEN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-icon"><i class="fa fa-pills"></i></div>
+        <div>
+          <div class="login-brand">PSC-M1</div>
+          <div class="login-brand-sub">Smart Pharmacy Monitoring System</div>
+        </div>
+      </div>
+      <h2 class="login-heading">Staff Sign In</h2>
+      <div class="form-field">
+        <label>Name</label>
+        <input type="text" id="loginName" placeholder="Enter your name" autocomplete="off" />
+      </div>
+      <div class="form-field">
+        <label>Password</label>
+        <input type="password" id="loginPw" placeholder="••••••••" />
+      </div>
+      <div class="form-field">
+        <label>Role</label>
+        <select id="loginRole">
+          <option value="">Select Role</option>
+          <option value="warehouse">Warehouse Operator</option>
+          <option value="substore">Substore Operator</option>
+        </select>
+      </div>
+      <button class="btn-login" onclick="doLogin()">Sign In</button>
+      <div class="login-note"><i class="fa fa-lock"></i> Secure access · Session expires on logout</div>
+    </div>
+  </div>
+ 
+  <!-- ═══════════════════════════════════════════ APP SHELL -->
+  <div id="appShell" class="app-shell hidden">
+ 
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-logo-icon"><i class="fa fa-pills"></i></div>
+        <div class="topbar-brand">PSC-M1</div>
+        <span class="topbar-divider"></span>
+        <div class="sys-status"><span class="status-dot"></span>All Systems Online</div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-date" id="topbarDate"></div>
+        <div class="topbar-staff">
+          <i class="fa fa-user-circle"></i>
+          <span id="topbarStaff">—</span>
+          <span class="role-chip" id="topbarRole">—</span>
+        </div>
+      </div>
+    </header>
+ 
+    <!-- SIDE NAV -->
+    <nav class="sidenav">
+      <div class="nav-group-label">Inventory</div>
+      <div class="nav-item active" data-page="stock" onclick="navigate('stock')">
+        <i class="fa fa-boxes-stacked"></i><span>Stock Monitor</span>
+      </div>
+      <div class="nav-item" data-page="restock" onclick="navigate('restock')">
+        <i class="fa fa-truck"></i><span>Restocking</span>
+        <span class="nav-badge" id="restockBadge">0</span>
+      </div>
+      <div class="nav-item" data-page="notifications" onclick="navigate('notifications')">
+        <i class="fa fa-bell"></i><span>Notifications</span>
+        <span class="nav-badge" id="notifBadge">0</span>
+      </div>
+ 
+      <div class="nav-group-label">Machine Operations</div>
+      <div class="nav-item" data-page="verification" onclick="navigate('verification')">
+        <i class="fa fa-microscope"></i><span>Verification</span>
+      </div>
+ 
+      <div class="nav-group-label">System</div>
+      <div class="nav-item" data-page="threshold" onclick="navigate('threshold')">
+        <i class="fa fa-sliders"></i><span>Threshold Settings</span>
+      </div>
+      <div class="nav-item" data-page="analytics" onclick="navigate('analytics')">
+        <i class="fa fa-chart-line"></i><span>Analytics</span>
+      </div>
+ 
+      <div class="nav-bottom">
+        <div class="nav-item nav-logout" onclick="doLogout()">
+          <i class="fa fa-right-from-bracket"></i><span>Log Out</span>
+        </div>
+      </div>
+    </nav>
+ 
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+ 
+      <!-- ══════════ STOCK MONITOR PAGE -->
+      <section id="page-stock" class="page active">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Stock Monitor</h1>
+            <p class="page-sub">Real-time medicine inventory · Today: <span id="stockTodayDate"></span></p>
+          </div>
+          <div class="header-stats" id="stockHeaderStats"></div>
+        </div>
+ 
+        <!-- Summary Cards -->
+        <div class="summary-row" id="stockSummary"></div>
+ 
+        <!-- Filters -->
+        <div class="toolbar">
+          <div class="search-wrap">
+            <i class="fa fa-search"></i>
+            <input type="text" id="stockSearch" class="search-input" placeholder="Search by Medicine ID or name…" oninput="renderStockTable()" />
+          </div>
+          <select class="filter-sel" id="stockFilter" onchange="renderStockTable()">
+            <option value="all">All Status</option>
+            <option value="normal">Normal</option>
+            <option value="low">Low Stock</option>
+            <option value="near-expiry">Near Expiry</option>
+            <option value="expired">Expired</option>
+          </select>
+        </div>
+ 
+        <!-- Table -->
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Med ID</th>
+                <th>Medicine Name</th>
+                <th>Total No.</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Last Updated</th>
+              </tr>
+            </thead>
+            <tbody id="stockBody"></tbody>
+          </table>
+        </div>
+      </section>
+ 
+      <!-- ══════════ RESTOCKING PAGE -->
+      <section id="page-restock" class="page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Restocking</h1>
+            <p class="page-sub">Low stock &amp; expired medicines requiring restock</p>
+          </div>
+        </div>
+ 
+        <div class="section-label">Medicines Requiring Restock</div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Med ID</th>
+                <th>Medicine Name</th>
+                <th>Total No.</th>
+                <th>Expiry Date</th>
+                <th>Status</th>
+                <th>Supplier</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="restockBody"></tbody>
+          </table>
+        </div>
+ 
+        <div class="section-label" style="margin-top:28px;">Active Restock Orders</div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Med ID</th>
+                <th>Medicine Name</th>
+                <th>Supplier</th>
+                <th>Qty Ordered</th>
+                <th>Order Date</th>
+                <th>Expected Delivery</th>
+                <th>Delivery Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="restockOrdersBody"></tbody>
+          </table>
+        </div>
+      </section>
+ 
+      <!-- ══════════ NOTIFICATIONS PAGE -->
+      <section id="page-notifications" class="page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Notifications</h1>
+            <p class="page-sub">System alerts and stock warnings</p>
+          </div>
+          <button class="btn-outline" onclick="clearNotifications()"><i class="fa fa-check-double"></i> Mark All Read</button>
+        </div>
+        <div id="notifList"></div>
+      </section>
+ 
+     <!-- ══════════ VERIFICATION PAGE -->
+<section id="page-verification" class="page">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Verification</h1>
+        <p class="page-sub">Machine vision · PSC-M1 hardware integration</p>
+      </div>
+    </div>
+  
+    <!-- Sub-tabs -->
+    <div class="subtab-bar">
+      <button class="subtab active" onclick="switchVerifTab('live', this)">
+        <i class="fa fa-camera"></i> Live Detection
+      </button>
+  
+      <button class="subtab" onclick="switchVerifTab('log', this)">
+        <i class="fa fa-list-check"></i> Verification Log
+      </button>
+  
+      <button class="subtab" onclick="switchVerifTab('failed', this)">
+        <i class="fa fa-triangle-exclamation"></i> Failed Verification Log
+      </button>
+    </div>
+  
+    <!-- LIVE TAB -->
+    <div id="verifLive" class="subtab-content active">
+      <div class="verif-live-grid">
+  
+        <!-- CAMERA -->
+        <div class="verif-cam-card">
+          <div class="verif-cam-label">
+            <span class="live-dot"></span> DroidCam Live Feed
+            <span id="camStatus" class="cam-status-chip cam-ok">Connected</span>
+          </div>
+  
+          <div class="cam-frame">
+            <img id="camFeed" src="" alt="Camera feed" style="display:none;" />
+  
+            <div id="camPlaceholder" class="cam-placeholder">
+              <i class="fa fa-camera" style="font-size:40px;opacity:0.25;"></i>
+              <div>DroidCam Feed</div>
+              <div style="font-size:12px;opacity:0.5;">
+                Set src to http://YOUR_PC_IP:5000/video_feed
+              </div>
+            </div>
+  
+            <div class="cam-scan-line"></div>
+          </div>
+  
+          <div class="cam-meta-row">
+            <span class="cam-chip"><i class="fa fa-microchip"></i> YOLOv8</span>
+            <span class="cam-chip"><i class="fa fa-eye"></i> OpenCV 4.8</span>
+            <span class="cam-chip" id="fpsDisplay">
+              <i class="fa fa-bolt"></i> 30 FPS
+            </span>
+          </div>
+        </div>
+  
+        <!-- DETECTION PANEL -->
+        <div class="verif-detect-card">
+          <div class="detect-header">Detection Status</div>
+  
+          <div id="liveDetectResult" class="detect-idle">
+            <i class="fa fa-hourglass-half"></i>
+            <div>Waiting for machine input…</div>
+            <div style="font-size:12px;opacity:0.6;">
+              Start PSC-M1 machine to begin
+            </div>
+          </div>
+  
+          <div class="detect-counts" id="detectCounts" style="display:none;">
+            <div class="count-box count-pass">
+              <div class="count-num" id="livePassCount">0</div>
+              <div class="count-label">PASS</div>
+            </div>
+  
+            <div class="count-box count-fail">
+              <div class="count-num" id="liveFailCount">0</div>
+              <div class="count-label">DEFECT / FAIL</div>
+            </div>
+          </div>
+  
+          <div style="margin-top:16px;">
+            <button class="btn-primary full-width"
+                    onclick="simulateVerifResult()"
+                    style="margin-bottom:8px;">
+              <i class="fa fa-play"></i> Simulate Verification
+            </button>
+  
+            <div style="font-size:11px;color:#999;text-align:center;">
+              In production, results arrive automatically from machine
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  
+    <!-- VERIFICATION LOG -->
+    <div id="verifLog" class="subtab-content">
+      <div class="table-card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Med ID</th>
+              <th>Medicine Name</th>
+              <th>Supplier</th>
+              <th>Expiry Date</th>
+              <th>Expected Qty</th>
+              <th>Pass Qty</th>
+              <th>Fail Qty</th>
+              <th>Machine Status</th>
+              <th>Approval</th>
+            </tr>
+          </thead>
+  
+          <tbody id="verifLogBody">
+  
+            <!-- PASS 1 -->
+            <tr>
+              <td>09 05 2026 14:21</td>
+              <td>MED001</td>
+              <td>Paracetamol 500mg</td>
+              <td>Duopharma</td>
+              <td>14/12/2027</td>
+              <td>100</td>
+              <td>100</td>
+              <td>0</td>
+              <td>
+                <span class="status-badge status-pass">
+                  Passed
+                </span>
+              </td>
+              <td>
+                <span class="approval-pass">
+                  Approved
+                </span>
+              </td>
+            </tr>
+  
+            <!-- PASS 2 -->
+            <tr>
+              <td>09 05 2026 14:25</td>
+              <td>MED002</td>
+              <td>Amoxicillin 250mg</td>
+              <td>YSP Pharma</td>
+              <td>03/08/2027</td>
+              <td>80</td>
+              <td>79</td>
+              <td>1</td>
+              <td>
+                <span class="status-badge status-pass">
+                  Passed
+                </span>
+              </td>
+              <td>
+                <span class="approval-pass">
+                  Approved
+                </span>
+              </td>
+            </tr>
+  
+            <!-- PASS 3 -->
+            <tr>
+              <td>09 05 2026 14:32</td>
+              <td>MED003</td>
+              <td>Metformin 500mg</td>
+              <td>Pharmaniaga</td>
+              <td>22/01/2028</td>
+              <td>120</td>
+              <td>120</td>
+              <td>0</td>
+              <td>
+                <span class="status-badge status-pass">
+                  Passed
+                </span>
+              </td>
+              <td>
+                <span class="approval-pass">
+                  Approved
+                </span>
+              </td>
+            </tr>
+  
+          </tbody>
+        </table>
+      </div>
+    </div>
+  
+    <!-- FAILED VERIFICATION LOG -->
+    <div id="verifFailed" class="subtab-content">
+      <div class="table-card">
+  
+        <div style="
+          margin-bottom:15px;
+          background:#fff3f3;
+          border:1px solid #ffd0d0;
+          padding:12px;
+          border-radius:10px;
+          color:#c62828;
+          font-size:13px;
+        ">
+          Failed verification items require supplier follow-up action.
+        </div>
+  
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Med ID</th>
+              <th>Medicine Name</th>
+              <th>Supplier</th>
+              <th>Expiry Date</th>
+              <th>Expected Qty</th>
+              <th>Pass Qty</th>
+              <th>Fail Qty</th>
+              <th>Issue</th>
+              <th>Further Action</th>
+            </tr>
+          </thead>
+  
+          <tbody id="failedVerifBody">
+  
+            <!-- FAIL 1 -->
+            <tr>
+              <td>09 05 2026 14:41</td>
+              <td>MED004</td>
+              <td>Cetirizine 10mg</td>
+              <td>Hovid</td>
+              <td>11/09/2026</td>
+              <td>100</td>
+              <td>93</td>
+              <td>7</td>
+              <td>
+                <span class="status-badge status-fail">
+                  Defect Detected
+                </span>
+              </td>
+              <td>Contact Supplier</td>
+            </tr>
+  
+            <!-- FAIL 2 -->
+            <tr>
+              <td>09 05 2026 14:50</td>
+              <td>MED005</td>
+              <td>Aspirin 100mg</td>
+              <td>Kotra Pharma</td>
+              <td>06/03/2027</td>
+              <td>60</td>
+              <td>54</td>
+              <td>6</td>
+              <td>
+                <span class="status-badge status-fail">
+                  Seal Damage
+                </span>
+              </td>
+              <td>Return Batch</td>
+            </tr>
+  
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+ 
+      <!-- ══════════ THRESHOLD SETTINGS PAGE -->
+      <section id="page-threshold" class="page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Threshold Settings</h1>
+            <p class="page-sub">Configure reorder thresholds for each medicine</p>
+          </div>
+          <button class="btn-primary" onclick="openAddMedModal()"><i class="fa fa-plus"></i> Add Medicine</button>
+        </div>
+        <div class="table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Med ID</th>
+                <th>Medicine Name</th>
+                <th>Current Stock</th>
+                <th>Threshold Value</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="thresholdBody"></tbody>
+          </table>
+        </div>
+      </section>
+ 
+      <!-- ══════════ ANALYTICS PAGE -->
+      <section id="page-analytics" class="page">
+        <div class="page-header">
+          <div>
+            <h1 class="page-title">Analytics</h1>
+            <p class="page-sub">Medicine usage trends · AI-powered predictions</p>
+          </div>
+        </div>
+ 
+        <!-- AI Alerts Banner -->
+        <div class="ai-banner">
+          <div class="ai-banner-label"><i class="fa fa-brain"></i> AI Predictions</div>
+          <div id="aiAlerts" class="ai-alert-row"></div>
+        </div>
+ 
+        <!-- Medicine selector -->
+        <div class="section-label" style="margin-top:20px;">Select Medicine to View Analytics</div>
+        <div class="med-selector-grid" id="medSelectorGrid"></div>
+ 
+        <!-- Detail panel -->
+        <div id="analyticsDetail" class="analytics-detail hidden">
+          <div class="analytics-detail-header">
+            <span id="analyticsDetailTitle"></span>
+            <button class="btn-outline btn-sm" onclick="closeAnalyticsDetail()"><i class="fa fa-times"></i></button>
+          </div>
+          <div class="analytics-cards-row" id="analyticsCards"></div>
+          <div class="analytics-tables-row">
+            <div class="analytics-table-card">
+              <div class="section-label">Daily Usage (Last 7 Days)</div>
+              <table class="data-table" id="dailyUsageTable">
+                <thead><tr><th>Date</th><th>Units Dispensed</th><th>Remaining</th></tr></thead>
+                <tbody id="dailyUsageBody"></tbody>
+              </table>
+            </div>
+            <div class="analytics-table-card">
+              <div class="section-label">Stockout Prediction</div>
+              <div id="stockoutPrediction" class="stockout-panel"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+ 
+    </main><!-- /main-content -->
+  </div><!-- /appShell -->
+ 
+  <!-- ═══════ MODALS -->
+ 
+  <!-- Edit Threshold Modal -->
+  <div id="modalThreshold" class="modal-overlay hidden" onclick="closeThresholdModal(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span id="modalThresholdTitle">Edit Threshold</span>
+        <button class="modal-close" onclick="closeThresholdModal()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="form-field">
+        <label>Medicine Name</label>
+        <input type="text" id="modalMedName" readonly style="background:#f5f5f5;" />
+      </div>
+      <div class="form-field">
+        <label>Threshold Value</label>
+        <input type="number" id="modalThresholdVal" min="1" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeThresholdModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveThreshold()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Add Medicine Modal -->
+  <div id="modalAddMed" class="modal-overlay hidden" onclick="closeAddMedModal(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>Add Medicine</span>
+        <button class="modal-close" onclick="closeAddMedModal()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="form-field"><label>Medicine ID</label><input type="text" id="addMedId" placeholder="e.g. MED006" /></div>
+      <div class="form-field"><label>Medicine Name</label><input type="text" id="addMedName" placeholder="e.g. Amoxicillin" /></div>
+      <div class="form-field"><label>Total No.</label><input type="number" id="addMedQty" placeholder="0" min="0" /></div>
+      <div class="form-field"><label>Expiry Date</label><input type="date" id="addMedExpiry" /></div>
+      <div class="form-field"><label>Threshold</label><input type="number" id="addMedThreshold" placeholder="Minimum stock level" min="1" /></div>
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeAddMedModal()">Cancel</button>
+        <button class="btn-primary" onclick="saveNewMedicine()">Add Medicine</button>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Verification Approval Modal -->
+  <div id="modalVerifApprove" class="modal-overlay hidden" onclick="closeVerifApproveModal(event)">
+    <div class="modal-card">
+      <div class="modal-header">
+        <span>Approve Verification</span>
+        <button class="modal-close" onclick="closeVerifApproveModal()"><i class="fa fa-times"></i></button>
+      </div>
+      <div class="modal-body-text" id="verifApproveText"></div>
+      <div class="form-field">
+        <label>New Expiry Date (for approved stock)</label>
+        <input type="date" id="verifApproveExpiry" />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-outline" onclick="closeVerifApproveModal()">Cancel</button>
+        <button class="btn-success" onclick="confirmVerifApproval()"><i class="fa fa-check"></i> Approve &amp; Add to Stock</button>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- Toast -->
+  <div id="toastContainer"></div>
+ 
+  <script src="script.js"></script>
+</body>
+</html>
